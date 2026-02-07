@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Briscola Hotseat</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="ambient">
+      <div class="decor-item tuna">
+        <img class="decor-img" src="assets/backgrounds/tunamelt.png" alt="" />
+        <div class="steam steam-tuna">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+        </div>
+      </div>
+
+      <div class="decor-item mug">
+        <img class="decor-img" src="assets/backgrounds/mug.png" alt="" />
+        <div class="steam steam-mug">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+        </div>
+      </div>
+
+      <div id="ambient-vignette"></div>
+    </div>
+    <div id="app"></div>
+    <div id="loading-overlay" aria-live="polite">
+      <div class="loading-card">Loading Memories 📝…</div>
+    </div>
+    <div id="error-overlay" aria-live="polite"></div>
+    <script type="module" src="src/main.js"></script>
+    <script>
+      window.onerror = function (message) {
+        var box = document.getElementById("error-overlay");
+        if (!box) return;
+        box.textContent = String(message || "Unknown error");
+        box.style.display = "block";
+      };
+    </script>
+  </body>
+</html>
