@@ -767,6 +767,17 @@ body {
   }
 }
 
+@media (max-width: 768px) {
+  /* Mobile ambient tweak: shift props upward without resizing */
+  .decor-item {
+    bottom: -2vh;
+  }
+
+  .decor-item.capy {
+    top: 1vh;
+  }
+}
+
 @keyframes zzz-float {
   0% {
     transform: translate(-50%, 6px);
