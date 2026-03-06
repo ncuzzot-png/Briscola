@@ -11,17 +11,17 @@ import { captureBeforeRender } from "./ui/animations.js";
 import { bindEvents } from "./ui/events.js";
 import { getPreloadUrls, preloadImages } from "./ui/assets.js";
 import { playSfx } from "./ui/sfx.js";
-import { hostRoom, joinRoom, sendAction, setOnlineHandlers, disconnectOnline } from "./net/online.js";
+import { hostRoom, joinRoom, sendAction, setOnlineHandlers, disconnectOnline, requestRematch } from "./net/online.js";
 
 const root = document.getElementById("app");
 let state = initialState();
-let onlineMeta = { status: "idle", roomCode: null, myPlayerIndex: null, isHost: false, error: null };
+let onlineMeta = { status: "idle", roomCode: null, myPlayerIndex: null, isHost: false, error: null, rematch: { p0: false, p1: false } };
 const seed = getSeed();
 let botTimerId = null;
 let trickTimerId = null;
 let preloadPromise = null;
 let loadingActive = false;
-let uiState = { showHomeConfirm: false };
+let uiState = { showHomeConfirm: false, showScore: false };
 const MIN_LOADING_MS = 700;
 const MAX_LOADING_MS = 2000;
 
@@ -40,6 +40,12 @@ function dispatch(action) {
   }
   if (action.type === "HIDE_HOME_CONFIRM") {
     uiState = { ...uiState, showHomeConfirm: false };
+    renderWithOnline();
+    bindEvents(root, dispatch);
+    return;
+  }
+  if (action.type === "TOGGLE_SCORE_PANEL") {
+    uiState = { ...uiState, showScore: !uiState.showScore };
     renderWithOnline();
     bindEvents(root, dispatch);
     return;
@@ -65,10 +71,14 @@ function dispatch(action) {
   }
   if (action.type === "ONLINE_CANCEL") {
     disconnectOnline();
-    onlineMeta = { status: "idle", roomCode: null, myPlayerIndex: null, isHost: false, error: null };
+    onlineMeta = { status: "idle", roomCode: null, myPlayerIndex: null, isHost: false, error: null, rematch: { p0: false, p1: false } };
     state = initialState();
     renderWithOnline();
     bindEvents(root, dispatch);
+    return;
+  }
+  if (action.type === "ONLINE_REMATCH") {
+    requestRematch();
     return;
   }
   if (action.type === "START_GAME" && !action._skipPreload) {
@@ -84,7 +94,8 @@ function dispatch(action) {
       clearTimeout(trickTimerId);
       trickTimerId = null;
     }
-    uiState = { ...uiState, showHomeConfirm: false };
+    uiState = { ...uiState, showHomeConfirm: false, showScore: false };
+    onlineMeta = { ...onlineMeta, rematch: { p0: false, p1: false } };
   }
   if (state.mode === "online") {
     if (action.type === "PLAY_CARD") {
@@ -184,6 +195,9 @@ setOnlineHandlers({
       trickTimerId = null;
     }
     state = serverState;
+    if (state.phase !== "gameover") {
+      onlineMeta = { ...onlineMeta, rematch: { p0: false, p1: false } };
+    }
     onlineMeta = { ...onlineMeta, status: "connected" };
     renderWithOnline();
     bindEvents(root, dispatch);

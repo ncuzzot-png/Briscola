@@ -109,6 +109,14 @@ export function bindEvents(root, dispatch) {
     });
   });
 
+  root.querySelectorAll("[data-action='online-rematch']").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      unlockSfx();
+      playSfx("button");
+      dispatch({ type: "ONLINE_REMATCH" });
+    });
+  });
+
   root.querySelectorAll("[data-action='back-menu']").forEach((btn) => {
     btn.addEventListener("click", () => {
       unlockSfx();
@@ -133,6 +141,14 @@ export function bindEvents(root, dispatch) {
       unlockSfx();
       playSfx("button");
       dispatch({ type: "HIDE_HOME_CONFIRM" });
+    });
+  });
+
+  root.querySelectorAll("[data-action='toggle-score']").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      unlockSfx();
+      playSfx("button");
+      dispatch({ type: "TOGGLE_SCORE_PANEL" });
     });
   });
 

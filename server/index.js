@@ -74,6 +74,7 @@ io.on("connection", (socket) => {
       code,
       state: createRoomState(),
       players: [socket.id, null],
+      rematch: [false, false],
       createdAt: Date.now(),
       lastSeen: Date.now(),
       resolveTimer: null,
@@ -108,6 +109,31 @@ io.on("connection", (socket) => {
       io.to(room.code).emit("room:ready");
     } else {
       io.to(room.code).emit("opponent_reconnected");
+    }
+    io.to(room.code).emit("rematch:status", {
+      p0: room.rematch[0],
+      p1: room.rematch[1],
+    });
+  });
+
+  socket.on("rematch:request", () => {
+    const code = socket.data.roomCode;
+    const room = getRoom(code);
+    if (!room) return;
+    const index = socket.data.playerIndex;
+    if (index !== 0 && index !== 1) return;
+    room.rematch[index] = true;
+    touch(room);
+    io.to(room.code).emit("rematch:status", {
+      p0: room.rematch[0],
+      p1: room.rematch[1],
+    });
+    if (room.rematch[0] && room.rematch[1]) {
+      room.rematch = [false, false];
+      const seed = Date.now();
+      room.state = applyAction(room.state, { type: "START_GAME", seed, mode: "online" });
+      broadcastState(room);
+      io.to(room.code).emit("rematch:status", { p0: false, p1: false });
     }
   });
 
@@ -152,6 +178,7 @@ io.on("connection", (socket) => {
     const index = socket.data.playerIndex;
     if (index === 0 || index === 1) {
       room.players[index] = null;
+      room.rematch[index] = false;
     }
     const hasPlayers = room.players[0] || room.players[1];
     if (!hasPlayers) {
@@ -161,6 +188,10 @@ io.on("connection", (socket) => {
     }
     touch(room);
     io.to(room.code).emit("opponent_disconnected");
+    io.to(room.code).emit("rematch:status", {
+      p0: room.rematch[0],
+      p1: room.rematch[1],
+    });
   });
 });
 

@@ -96,6 +96,12 @@ async function ensureSocket() {
     }
   });
 
+  socket.on("rematch:status", (payload) => {
+    if (handlers.onStatus) {
+      handlers.onStatus({ rematch: { p0: !!payload?.p0, p1: !!payload?.p1 } });
+    }
+  });
+
   return socket;
 }
 
@@ -120,6 +126,11 @@ export async function joinRoom(code) {
 export function sendAction(action) {
   if (!socket) return;
   socket.emit("action", action);
+}
+
+export function requestRematch() {
+  if (!socket) return;
+  socket.emit("rematch:request");
 }
 
 export function getOnlineMeta() {

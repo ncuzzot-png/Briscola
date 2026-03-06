@@ -47,6 +47,10 @@ export function render(root, state) {
   root.appendChild(renderGame(state));
   root.appendChild(renderSoundToggle());
   root.appendChild(renderHomeButton());
+  root.appendChild(renderScoreToggle(state));
+  if (state.ui?.showScore) {
+    root.appendChild(renderScorePanel(state));
+  }
   if (state.ui?.showHomeConfirm && state.phase !== "menu") {
     root.appendChild(renderHomeConfirm());
   }
@@ -73,6 +77,36 @@ function renderSoundToggle() {
     </div>
   `;
   return btn;
+}
+
+function renderScoreToggle(state) {
+  if (state.phase !== "playing") return document.createElement("div");
+  const btn = document.createElement("button");
+  btn.className = "score-toggle";
+  btn.dataset.action = "toggle-score";
+  btn.textContent = "Score";
+  return btn;
+}
+
+function renderScorePanel(state) {
+  const isHotseat = state.mode === "hotseat";
+  const isOnline = state.mode === "online";
+  const myIndex = Number.isFinite(state.online?.myPlayerIndex) ? state.online.myPlayerIndex : 0;
+  const labels = isHotseat
+    ? ["Player 1", "Player 2"]
+    : ["You", "Opponent"];
+  const scores = isHotseat
+    ? [state.scores[0], state.scores[1]]
+    : myIndex === 0
+    ? [state.scores[0], state.scores[1]]
+    : [state.scores[1], state.scores[0]];
+  const panel = document.createElement("div");
+  panel.className = "score-panel";
+  panel.innerHTML = `
+    <div class="score-row"><span>${labels[0]}</span><span>${scores[0]}</span></div>
+    <div class="score-row"><span>${labels[1]}</span><span>${scores[1]}</span></div>
+  `;
+  return panel;
 }
 
 function renderHomeButton() {
@@ -196,6 +230,9 @@ function renderEnd(state) {
   const myIndex = Number.isFinite(state.online?.myPlayerIndex) ? state.online.myPlayerIndex : 0;
   const myScore = myIndex === 0 ? p1 : p2;
   const oppScore = myIndex === 0 ? p2 : p1;
+  const rematch = state.online?.rematch || { p0: false, p1: false };
+  const myRematch = myIndex === 0 ? rematch.p0 : rematch.p1;
+  const oppRematch = myIndex === 0 ? rematch.p1 : rematch.p0;
 
   let title = "Draw";
   if (isHotseat) {
@@ -213,9 +250,10 @@ function renderEnd(state) {
   screen.innerHTML = `
     <h1>${title}</h1>
     <div class="end-score">${scoreLine}</div>
-    ${isOnline ? `<div class="small end-note">Start a new room for a rematch.</div>` : ""}
+    ${isOnline && oppRematch && !myRematch ? `<div class="small end-note">Opponent wants a rematch</div>` : ""}
+    ${isOnline && myRematch && !oppRematch ? `<div class="small end-note">Waiting for opponent…</div>` : ""}
     <div class="end-actions">
-      ${isOnline ? "" : `<button class="button" data-action="play-again" data-mode="${state.mode}" data-bot="${state.botDifficulty || "medium"}">Play again</button>`}
+      ${isOnline ? `<button class="button" data-action="online-rematch">Rematch</button>` : `<button class="button" data-action="play-again" data-mode="${state.mode}" data-bot="${state.botDifficulty || "medium"}">Play again</button>`}
       <button class="button" data-action="back-menu" data-online="${isOnline ? "true" : "false"}">Back to menu</button>
     </div>
   `;
