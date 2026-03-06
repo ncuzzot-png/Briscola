@@ -320,6 +320,12 @@ function renderTrumpCard(state) {
   const cardEl = renderCardFace(state.briscolaCard);
   cardEl.classList.add("trump-card-inner");
   wrap.appendChild(cardEl);
+  if (state.isBeforeFinalDraw) {
+    const badge = document.createElement("div");
+    badge.className = "final-draw-badge";
+    badge.textContent = "Final draw next";
+    wrap.appendChild(badge);
+  }
   return wrap;
 }
 

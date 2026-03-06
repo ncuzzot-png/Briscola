@@ -8,6 +8,7 @@ function baseState() {
     botDifficulty: "medium",
     awaitingTrickResolve: false,
     trickPauseMs: 900,
+    isBeforeFinalDraw: false,
     hotseatViewPlayer: null,
     hands: [[], []],
     deck: [],
@@ -48,6 +49,7 @@ export function newGameWithMode(seed, mode, botDifficulty = "medium", trickPause
     botDifficulty: botDifficulty || "medium",
     awaitingTrickResolve: false,
     trickPauseMs: Number.isFinite(trickPauseMs) ? trickPauseMs : 900,
+    isBeforeFinalDraw: isBeforeFinalDraw({ deck, briscolaCard }),
     hotseatViewPlayer: mode === "hotseat" ? 0 : null,
     hands,
     deck,
@@ -112,6 +114,11 @@ function isGameOver(state) {
   );
 }
 
+function isBeforeFinalDraw(state) {
+  const remaining = state.deck.length + (state.briscolaCard ? 1 : 0);
+  return remaining === 2;
+}
+
 export function applyAction(state, action) {
   switch (action.type) {
     case "START_GAME": {
@@ -126,6 +133,7 @@ export function applyAction(state, action) {
         ...state,
         overlay: null,
         hotseatViewPlayer: state.mode === "hotseat" ? state.turn : state.hotseatViewPlayer,
+        isBeforeFinalDraw: isBeforeFinalDraw(state),
       };
     }
     case "PLAY_CARD": {
@@ -154,6 +162,7 @@ export function applyAction(state, action) {
           ...nextState,
           awaitingTrickResolve: true,
           overlay: null,
+          isBeforeFinalDraw: isBeforeFinalDraw(nextState),
         };
       }
 
@@ -171,6 +180,7 @@ export function applyAction(state, action) {
           state.mode === "hotseat"
             ? (nextOverlayValue ? null : nextTurn)
             : nextState.hotseatViewPlayer,
+        isBeforeFinalDraw: isBeforeFinalDraw(nextState),
       };
     }
     case "NEXT_TRICK": {
@@ -215,6 +225,7 @@ export function applyAction(state, action) {
           phase: "gameover",
           overlay: null,
           log: appendLog(nextState, winnerText),
+          isBeforeFinalDraw: isBeforeFinalDraw(nextState),
         };
       }
 
@@ -229,6 +240,7 @@ export function applyAction(state, action) {
           state.mode === "hotseat"
             ? (resolveOverlay ? null : nextState.turn)
             : nextState.hotseatViewPlayer,
+        isBeforeFinalDraw: isBeforeFinalDraw(nextState),
       };
     }
     case "RESTART": {
