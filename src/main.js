@@ -51,6 +51,16 @@ function dispatch(action) {
     return;
   }
   if (action.type === "ONLINE_HOST") {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      onlineMeta = {
+        ...onlineMeta,
+        status: "error",
+        error: "Online play requires internet",
+      };
+      renderWithOnline();
+      bindEvents(root, dispatch);
+      return;
+    }
     runWithPreload(() => {
       hostRoom().catch((err) => {
         onlineMeta = { ...onlineMeta, status: "error", error: err?.message || "Failed to host" };
@@ -60,6 +70,16 @@ function dispatch(action) {
     return;
   }
   if (action.type === "ONLINE_JOIN") {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      onlineMeta = {
+        ...onlineMeta,
+        status: "error",
+        error: "Online play requires internet",
+      };
+      renderWithOnline();
+      bindEvents(root, dispatch);
+      return;
+    }
     const code = action.code || "";
     runWithPreload(() => {
       joinRoom(code).catch((err) => {
@@ -129,6 +149,7 @@ function getSeed() {
 renderWithOnline();
 bindEvents(root, dispatch);
 ensurePreload();
+registerServiceWorker();
 
 window.BriscolaTests = {
   testTrickWinner,
@@ -269,4 +290,16 @@ function handleSfxTransition(prevState, nextState) {
       playSfx("lose");
     }
   }
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  const isSupportedProtocol =
+    window.location.protocol === "https:" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+  if (!isSupportedProtocol) return;
+  navigator.serviceWorker.register("service-worker.js").catch((err) => {
+    console.warn("Service worker registration failed:", err);
+  });
 }
